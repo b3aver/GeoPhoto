@@ -8,7 +8,8 @@
     <string name="button_location">location</string>
     <string name="button_send">send</string>
     <string name="view_photo_descr">Photo</string>
-    <string name="text_location">Location:</string>
-    <string name="text_date">Date:</string>
+    <string name="text_location">Location: </string>
+    <string name="text_date">Date: </string>
+    <string name="album_name">GeoPhoto</string>
     
 </resources>

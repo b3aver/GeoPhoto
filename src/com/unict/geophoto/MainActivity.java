@@ -4,10 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -53,8 +53,8 @@ public class MainActivity extends Activity {
 		case ACTION_TAKE_PHOTO: {
 			if (resultCode == Activity.RESULT_OK) {
 				updateImage();
-				timestamp = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
-						.format(new Date());
+				timestamp = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss",
+						Locale.getDefault()).format(new Date());
 				updateDate();
 			}
 		}
@@ -88,8 +88,8 @@ public class MainActivity extends Activity {
 
 	private File createImageFile() throws IOException {
 		// Create an image file name
-		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss")
-				.format(new Date());
+		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss",
+				Locale.getDefault()).format(new Date());
 		String imageFileName = JPEG_FILE_PREFIX + timeStamp + "_";
 		File image = File.createTempFile(imageFileName, JPEG_FILE_SUFFIX,
 				getAlbumDir());

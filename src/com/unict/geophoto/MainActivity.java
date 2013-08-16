@@ -16,6 +16,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -65,7 +66,6 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
-		Log.d("GeoPhoto", outState.toString());
 		outState.putString("location", this.location);
 		outState.putString("timestamp", this.timestamp);
 		if (this.imagePath != null) {
@@ -147,7 +147,6 @@ public class MainActivity extends Activity {
 	}
 
 	private void updateImage() {
-		// imageView.setVisibility(View.INVISIBLE);
 		if (imagePath != null) {
 			// retrieve sizes
 			BitmapFactory.Options opts = new BitmapFactory.Options();
@@ -155,36 +154,40 @@ public class MainActivity extends Activity {
 			BitmapFactory.decodeFile(imagePath.getAbsolutePath(), opts);
 			final int height = opts.outHeight;
 			final int width = opts.outWidth;
-			final int reqHeight = imageView.getHeight();
-			final int reqWidth = imageView.getWidth();
-			// calculate sample ratios
-			int inSampleSize = 1;
-			if (height > reqHeight || width > reqWidth) {
-				// Calculate ratios of height and width to requested height and
-				// width
-				final int heightRatio = Math.round((float) height
-						/ (float) reqHeight);
-				final int widthRatio = Math.round((float) width
-						/ (float) reqWidth);
-
-				// Choose the smallest ratio as inSampleSize value, this will
-				// guarantee a final image with both dimensions larger than or
-				// equal to the requested height and width.
-				inSampleSize = heightRatio < widthRatio ? heightRatio
-						: widthRatio;
-			}
-			// load and show photo
-			BitmapFactory.Options opts2 = new BitmapFactory.Options();
-			opts2.inJustDecodeBounds = false;
-			opts2.inSampleSize = inSampleSize;
-			imageView.setImageDrawable(null);
-			// imageView.setImageURI(Uri.fromFile(imagePath));
-			imageView.setImageBitmap(BitmapFactory.decodeFile(
-					imagePath.getAbsolutePath(), opts2));
-			imageView.invalidate();
+			ViewTreeObserver vto = imageView.getViewTreeObserver();
+			vto.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+				public boolean onPreDraw() {
+					int reqHeight = imageView.getMeasuredHeight();
+					int reqWidth = imageView.getMeasuredWidth();
+					// calculate sample ratios
+					int inSampleSize = 1;
+					if (height > reqHeight || width > reqWidth) {
+						// Calculate ratios of height and width to requested
+						// height and width
+						final int heightRatio = Math.round((float) height
+								/ (float) reqHeight);
+						final int widthRatio = Math.round((float) width
+								/ (float) reqWidth);
+						// Choose the smallest ratio as inSampleSize value, this
+						// will guarantee a final image with both dimensions
+						// larger than or equal to the requested height and
+						// width.
+						inSampleSize = heightRatio < widthRatio ? heightRatio
+								: widthRatio;
+					}
+					// load and show photo
+					BitmapFactory.Options opts2 = new BitmapFactory.Options();
+					opts2.inJustDecodeBounds = false;
+					opts2.inSampleSize = inSampleSize;
+					imageView.setImageBitmap(BitmapFactory.decodeFile(
+							imagePath.getAbsolutePath(), opts2));
+					// remove this listener
+					imageView.getViewTreeObserver().removeOnPreDrawListener(
+							this);
+					return true;
+				}
+			});
 		}
-		// imageView.setVisibility(View.VISIBLE);
-
 	}
 
 	private void updateLocation() {

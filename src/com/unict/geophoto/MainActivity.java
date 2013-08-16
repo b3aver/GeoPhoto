@@ -8,6 +8,7 @@ import java.util.Locale;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -52,6 +53,7 @@ public class MainActivity extends Activity {
 		switch (requestCode) {
 		case ACTION_TAKE_PHOTO: {
 			if (resultCode == Activity.RESULT_OK) {
+				// updateImage();
 				updateImage();
 				timestamp = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss",
 						Locale.getDefault()).format(new Date());
@@ -76,7 +78,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		// updateImage();
+		updateImage();
 		updateLocation();
 		updateDate();
 	}
@@ -145,9 +147,44 @@ public class MainActivity extends Activity {
 	}
 
 	private void updateImage() {
+		// imageView.setVisibility(View.INVISIBLE);
 		if (imagePath != null) {
-			imageView.setImageURI(Uri.fromFile(imagePath));
+			// retrieve sizes
+			BitmapFactory.Options opts = new BitmapFactory.Options();
+			opts.inJustDecodeBounds = true;
+			BitmapFactory.decodeFile(imagePath.getAbsolutePath(), opts);
+			final int height = opts.outHeight;
+			final int width = opts.outWidth;
+			final int reqHeight = imageView.getHeight();
+			final int reqWidth = imageView.getWidth();
+			// calculate sample ratios
+			int inSampleSize = 1;
+			if (height > reqHeight || width > reqWidth) {
+				// Calculate ratios of height and width to requested height and
+				// width
+				final int heightRatio = Math.round((float) height
+						/ (float) reqHeight);
+				final int widthRatio = Math.round((float) width
+						/ (float) reqWidth);
+
+				// Choose the smallest ratio as inSampleSize value, this will
+				// guarantee a final image with both dimensions larger than or
+				// equal to the requested height and width.
+				inSampleSize = heightRatio < widthRatio ? heightRatio
+						: widthRatio;
+			}
+			// load and show photo
+			BitmapFactory.Options opts2 = new BitmapFactory.Options();
+			opts2.inJustDecodeBounds = false;
+			opts2.inSampleSize = inSampleSize;
+			imageView.setImageDrawable(null);
+			// imageView.setImageURI(Uri.fromFile(imagePath));
+			imageView.setImageBitmap(BitmapFactory.decodeFile(
+					imagePath.getAbsolutePath(), opts2));
+			imageView.invalidate();
 		}
+		// imageView.setVisibility(View.VISIBLE);
+
 	}
 
 	private void updateLocation() {

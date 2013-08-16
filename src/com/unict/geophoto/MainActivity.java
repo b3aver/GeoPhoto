@@ -61,6 +61,38 @@ public class MainActivity extends Activity {
 		}
 	}
 
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		Log.d("GeoPhoto", outState.toString());
+		outState.putString("location", this.location);
+		outState.putString("timestamp", this.timestamp);
+		if (this.imagePath != null) {
+			outState.putString("path", this.imagePath.getAbsolutePath());
+		} else {
+			outState.putString("path", null);
+		}
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		// updateImage();
+		updateLocation();
+		updateDate();
+	}
+
+	@Override
+	protected void onRestoreInstanceState(Bundle savedInstanceState) {
+		this.location = savedInstanceState.getString("location");
+		this.timestamp = savedInstanceState.getString("timestamp");
+		String path = savedInstanceState.getString("path");
+		if (path != null) {
+			this.imagePath = new File(path);
+		} else {
+			this.imagePath = null;
+		}
+	}
+
 	/** Called when the user clicks the photo button */
 	public void takePhoto(View view) {
 		try {

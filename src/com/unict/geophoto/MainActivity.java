@@ -55,10 +55,10 @@ public class MainActivity extends Activity {
 		case ACTION_TAKE_PHOTO: {
 			if (resultCode == Activity.RESULT_OK) {
 				// updateImage();
-				updateImage();
+				repaintImage();
 				timestamp = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss",
 						Locale.getDefault()).format(new Date());
-				updateDate();
+				repaintDate();
 			}
 		}
 		}
@@ -78,9 +78,9 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		updateImage();
-		updateLocation();
-		updateDate();
+		repaintImage();
+		repaintLocation();
+		repaintDate();
 	}
 
 	@Override
@@ -146,7 +146,7 @@ public class MainActivity extends Activity {
 		return albumDir;
 	}
 
-	private void updateImage() {
+	private void repaintImage() {
 		if (imagePath != null) {
 			// retrieve sizes
 			BitmapFactory.Options opts = new BitmapFactory.Options();
@@ -190,11 +190,12 @@ public class MainActivity extends Activity {
 		}
 	}
 
-	private void updateLocation() {
-		textLocation.setText(getString(R.string.text_location) + location);
+	private void repaintLocation() {
+		textLocation
+				.setText(getString(R.string.text_location) + " " + location);
 	}
 
-	private void updateDate() {
-		textDate.setText(getString(R.string.text_date) + timestamp);
+	private void repaintDate() {
+		textDate.setText(getString(R.string.text_date) + " " + timestamp);
 	}
 }

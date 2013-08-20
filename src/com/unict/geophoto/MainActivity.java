@@ -7,12 +7,18 @@ import java.util.Date;
 import java.util.Locale;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -20,9 +26,10 @@ import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements LocationListener {
 
 	private static final int ACTION_TAKE_PHOTO = 1;
+	private static final int ACTION_ENABLE_LOCATION_SOURCE = 2;
 	private static final String JPEG_FILE_PREFIX = "IMG_";
 	private static final String JPEG_FILE_SUFFIX = ".jpg";
 	private File imagePath;
@@ -31,6 +38,8 @@ public class MainActivity extends Activity {
 	private ImageView imageView;
 	private TextView textLocation;
 	private TextView textDate;
+	private LocationManager locationManager;
+	private String provider;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +48,8 @@ public class MainActivity extends Activity {
 		imageView = (ImageView) findViewById(R.id.imageViewPhoto);
 		textLocation = (TextView) findViewById(R.id.textLocation);
 		textDate = (TextView) findViewById(R.id.textDate);
+		locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+		provider = LocationManager.GPS_PROVIDER;
 	}
 
 	@Override
@@ -60,6 +71,11 @@ public class MainActivity extends Activity {
 						Locale.getDefault()).format(new Date());
 				repaintDate();
 			}
+			break;
+		}
+		case ACTION_ENABLE_LOCATION_SOURCE: {
+			Log.d("GeoPhoto", "Return from location source settings");
+			retrieveLocation();
 		}
 		}
 	}
@@ -95,6 +111,9 @@ public class MainActivity extends Activity {
 		}
 	}
 
+	/*
+	 * User interface callbacks
+	 */
 	/** Called when the user clicks the photo button */
 	public void takePhoto(View view) {
 		try {
@@ -112,7 +131,7 @@ public class MainActivity extends Activity {
 
 	/** Called when the user clicks the location button */
 	public void takeLocation(View view) {
-
+		retrieveLocation();
 	}
 
 	/** Called when the user clicks the send button */
@@ -120,6 +139,9 @@ public class MainActivity extends Activity {
 
 	}
 
+	/*
+	 * Internal methods to take the photo
+	 */
 	private File createImageFile() throws IOException {
 		// Create an image file name
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss",
@@ -146,6 +168,46 @@ public class MainActivity extends Activity {
 		return albumDir;
 	}
 
+	/*
+	 * Internal methods to take location
+	 */
+	private void retrieveLocation() {
+		boolean enabled = locationManager.isProviderEnabled(provider);
+		if (!enabled) {
+			showGPSAlert();
+		} else {
+			Log.d("GeoPhoto", "Location Enabled");
+			locationManager
+					.requestSingleUpdate(provider, this, getMainLooper());
+		}
+	}
+
+	private void showGPSAlert() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(getString(R.string.dialog_gps_title))
+				.setMessage(getString(R.string.dialog_gps_message))
+				.setPositiveButton(getString(R.string.dialog_gps_ok),
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int id) {
+								Intent intent = new Intent(
+										Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+								startActivityForResult(intent,
+										ACTION_ENABLE_LOCATION_SOURCE);
+							}
+						})
+				.setNegativeButton(getString(R.string.dialog_gps_cancel),
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int id) {
+								// User cancelled the dialog
+							}
+						});
+		// show the created AlertDialog
+		builder.show();
+	}
+
+	/*
+	 * Repaint methods
+	 */
 	private void repaintImage() {
 		if (imagePath != null) {
 			// retrieve sizes
@@ -197,5 +259,34 @@ public class MainActivity extends Activity {
 
 	private void repaintDate() {
 		textDate.setText(getString(R.string.text_date) + " " + timestamp);
+	}
+
+	/*
+	 * LocationListener methods
+	 */
+	@Override
+	public void onLocationChanged(Location location) {
+		Log.d("GeoPhoto", "Location retrieved");
+		this.location = "Lat: " + location.getLatitude() + ", Long: "
+				+ location.getLongitude();
+		repaintLocation();
+	}
+
+	@Override
+	public void onProviderDisabled(String arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onProviderEnabled(String arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
+		// TODO Auto-generated method stub
+
 	}
 }

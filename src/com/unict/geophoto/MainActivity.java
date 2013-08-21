@@ -33,13 +33,16 @@ public class MainActivity extends Activity implements LocationListener {
 	private static final String JPEG_FILE_PREFIX = "IMG_";
 	private static final String JPEG_FILE_SUFFIX = ".jpg";
 	private File imagePath;
-	private String location = "";
+	private double latitude;
+	private double longitude;
 	private String timestamp = "";
 	private ImageView imageView;
 	private TextView textLocation;
 	private TextView textDate;
 	private LocationManager locationManager;
 	private String provider;
+	private boolean locationSearching = false;
+	private boolean locationEnstablished = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -82,7 +85,8 @@ public class MainActivity extends Activity implements LocationListener {
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
-		outState.putString("location", this.location);
+		outState.putDouble("latitude", this.latitude);
+		outState.putDouble("longitude", this.longitude);
 		outState.putString("timestamp", this.timestamp);
 		if (this.imagePath != null) {
 			outState.putString("path", this.imagePath.getAbsolutePath());
@@ -101,7 +105,8 @@ public class MainActivity extends Activity implements LocationListener {
 
 	@Override
 	protected void onRestoreInstanceState(Bundle savedInstanceState) {
-		this.location = savedInstanceState.getString("location");
+		this.latitude = savedInstanceState.getDouble("latitude");
+		this.longitude = savedInstanceState.getDouble("longitude");
 		this.timestamp = savedInstanceState.getString("timestamp");
 		String path = savedInstanceState.getString("path");
 		if (path != null) {
@@ -177,6 +182,8 @@ public class MainActivity extends Activity implements LocationListener {
 			showGPSAlert();
 		} else {
 			Log.d("GeoPhoto", "Location Enabled");
+			this.locationSearching = true;
+			this.locationEnstablished = false;
 			locationManager
 					.requestSingleUpdate(provider, this, getMainLooper());
 		}
@@ -253,8 +260,15 @@ public class MainActivity extends Activity implements LocationListener {
 	}
 
 	private void repaintLocation() {
-		textLocation
-				.setText(getString(R.string.text_location) + " " + location);
+		if (this.locationSearching) {
+			textLocation.setText(getString(R.string.text_location) + " "
+					+ getString(R.string.text_searching));
+		} else if (this.locationEnstablished) {
+			textLocation.setText(getString(R.string.text_location) + " Lat: "
+					+ this.latitude + ", Long: " + this.longitude);
+		} else {
+			textLocation.setText(getString(R.string.text_location));
+		}
 	}
 
 	private void repaintDate() {
@@ -267,8 +281,10 @@ public class MainActivity extends Activity implements LocationListener {
 	@Override
 	public void onLocationChanged(Location location) {
 		Log.d("GeoPhoto", "Location retrieved");
-		this.location = "Lat: " + location.getLatitude() + ", Long: "
-				+ location.getLongitude();
+		this.latitude = location.getLatitude();
+		this.longitude = location.getLongitude();
+		this.locationSearching = false;
+		this.locationEnstablished = true;
 		repaintLocation();
 	}
 

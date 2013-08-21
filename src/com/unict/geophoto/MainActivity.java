@@ -35,7 +35,7 @@ public class MainActivity extends Activity implements LocationListener {
 	private File imagePath;
 	private double latitude;
 	private double longitude;
-	private String timestamp = "";
+	private String date = "";
 	private ImageView imageView;
 	private TextView textLocation;
 	private TextView textDate;
@@ -68,11 +68,7 @@ public class MainActivity extends Activity implements LocationListener {
 		switch (requestCode) {
 		case ACTION_TAKE_PHOTO: {
 			if (resultCode == Activity.RESULT_OK) {
-				// updateImage();
 				repaintImage();
-				timestamp = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss",
-						Locale.getDefault()).format(new Date());
-				repaintDate();
 			}
 			break;
 		}
@@ -87,7 +83,7 @@ public class MainActivity extends Activity implements LocationListener {
 	protected void onSaveInstanceState(Bundle outState) {
 		outState.putDouble("latitude", this.latitude);
 		outState.putDouble("longitude", this.longitude);
-		outState.putString("timestamp", this.timestamp);
+		outState.putString("date", this.date);
 		if (this.imagePath != null) {
 			outState.putString("path", this.imagePath.getAbsolutePath());
 		} else {
@@ -107,7 +103,7 @@ public class MainActivity extends Activity implements LocationListener {
 	protected void onRestoreInstanceState(Bundle savedInstanceState) {
 		this.latitude = savedInstanceState.getDouble("latitude");
 		this.longitude = savedInstanceState.getDouble("longitude");
-		this.timestamp = savedInstanceState.getString("timestamp");
+		this.date = savedInstanceState.getString("date");
 		String path = savedInstanceState.getString("path");
 		if (path != null) {
 			this.imagePath = new File(path);
@@ -272,7 +268,7 @@ public class MainActivity extends Activity implements LocationListener {
 	}
 
 	private void repaintDate() {
-		textDate.setText(getString(R.string.text_date) + " " + timestamp);
+		textDate.setText(getString(R.string.text_date) + " " + this.date);
 	}
 
 	/*
@@ -286,6 +282,9 @@ public class MainActivity extends Activity implements LocationListener {
 		this.locationSearching = false;
 		this.locationEnstablished = true;
 		repaintLocation();
+		this.date = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss",
+				Locale.getDefault()).format(new Date());
+		repaintDate();
 	}
 
 	@Override

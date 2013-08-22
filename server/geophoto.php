@@ -26,12 +26,33 @@
   <head>
     <title>GeoPhoto</title>
     <meta charset="UTF-8">
+    <style type="text/css">
+      body {
+        max-width: 650px;
+        margin: auto auto 10px;
+      }
+      h1 {
+        color: #6060B0;
+        text-align: center;
+      }
+     .date {
+        font-weight: bold;
+        color: #6060FF;
+      }
+      li {
+        margin-top: 10px;
+        background: #EEEEFF;
+      }
+      form {
+        text-align: center;
+      }
+    </style>
   </head>
   <body>
+    <h1>GeoPhoto</h1>
     <ul>
       <?php
-         $cwd = opendir(".");
-         while($filename = readdir($cwd)){
+         foreach(scandir(".") as $filename){
            if(pathinfo($filename, PATHINFO_EXTENSION) == "xml"){
              $xml = simplexml_load_file($filename);
              echo '<li>';
@@ -43,7 +64,6 @@
              echo "</li>\n";
            }
          }
-         closedir($cwd);
          ?>
     </ul>
     <form action="geophoto.php" method="post">

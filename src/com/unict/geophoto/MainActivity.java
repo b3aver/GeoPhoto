@@ -83,6 +83,8 @@ public class MainActivity extends Activity implements LocationListener {
 	protected void onSaveInstanceState(Bundle outState) {
 		outState.putDouble("latitude", this.latitude);
 		outState.putDouble("longitude", this.longitude);
+		outState.putBoolean("location_searching", this.locationSearching);
+		outState.putBoolean("location_enstablished", this.locationEnstablished);
 		outState.putString("date", this.date);
 		if (this.imagePath != null) {
 			outState.putString("path", this.imagePath.getAbsolutePath());
@@ -103,6 +105,10 @@ public class MainActivity extends Activity implements LocationListener {
 	protected void onRestoreInstanceState(Bundle savedInstanceState) {
 		this.latitude = savedInstanceState.getDouble("latitude");
 		this.longitude = savedInstanceState.getDouble("longitude");
+		this.locationSearching = savedInstanceState
+				.getBoolean("location_searching");
+		this.locationEnstablished = savedInstanceState
+				.getBoolean("location_enstablished");
 		this.date = savedInstanceState.getString("date");
 		String path = savedInstanceState.getString("path");
 		if (path != null) {
@@ -180,6 +186,7 @@ public class MainActivity extends Activity implements LocationListener {
 			Log.d("GeoPhoto", "Location Enabled");
 			this.locationSearching = true;
 			this.locationEnstablished = false;
+			repaintLocation();
 			locationManager
 					.requestSingleUpdate(provider, this, getMainLooper());
 		}

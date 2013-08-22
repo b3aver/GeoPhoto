@@ -27,6 +27,7 @@
         android:layout_alignBaseline="@+id/buttonLocation"
         android:layout_alignBottom="@+id/buttonLocation"
         android:layout_toRightOf="@+id/buttonLocation"
+        android:enabled="false"
         android:onClick="sendData"
         android:text="@string/button_send" />
 
@@ -36,6 +37,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
+        android:enabled="false"
         android:onClick="takeLocation"
         android:text="@string/button_location" />
 

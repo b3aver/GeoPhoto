@@ -40,6 +40,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -55,6 +56,9 @@ public class MainActivity extends Activity implements LocationListener {
 	private double latitude;
 	private double longitude;
 	private String date = "";
+	private Button buttonPhoto;
+	private Button buttonLocation;
+	private Button buttonSend;
 	private ImageView imageView;
 	private TextView textLocation;
 	private TextView textDate;
@@ -62,13 +66,16 @@ public class MainActivity extends Activity implements LocationListener {
 	private String provider;
 	private Activity mainActivity = this;
 	private boolean locationSearching = false;
-	private boolean locationEnstablished = false;
+	private boolean locationEstablished = false;
 	private boolean sending = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		buttonPhoto = (Button) findViewById(R.id.buttonPhoto);
+		buttonLocation = (Button) findViewById(R.id.buttonLocation);
+		buttonSend = (Button) findViewById(R.id.buttonSend);
 		imageView = (ImageView) findViewById(R.id.imageViewPhoto);
 		textLocation = (TextView) findViewById(R.id.textLocation);
 		textDate = (TextView) findViewById(R.id.textDate);
@@ -90,6 +97,9 @@ public class MainActivity extends Activity implements LocationListener {
 		case ACTION_TAKE_PHOTO: {
 			if (resultCode == Activity.RESULT_OK) {
 				repaintImage();
+			} else {
+				imagePath.delete();
+				imagePath = null;
 			}
 			break;
 		}
@@ -104,13 +114,14 @@ public class MainActivity extends Activity implements LocationListener {
 		}
 		}
 	}
-	
+
 	@Override
 	protected void onResume() {
 		super.onResume();
 		repaintImage();
 		repaintLocation();
 		repaintDate();
+		updateButtons();
 	}
 
 	@Override
@@ -118,7 +129,7 @@ public class MainActivity extends Activity implements LocationListener {
 		outState.putDouble("latitude", this.latitude);
 		outState.putDouble("longitude", this.longitude);
 		outState.putBoolean("location_searching", this.locationSearching);
-		outState.putBoolean("location_enstablished", this.locationEnstablished);
+		outState.putBoolean("location_enstablished", this.locationEstablished);
 		outState.putBoolean("sending", this.sending);
 		outState.putString("date", this.date);
 		if (this.imagePath != null) {
@@ -134,7 +145,7 @@ public class MainActivity extends Activity implements LocationListener {
 		this.longitude = savedInstanceState.getDouble("longitude");
 		this.locationSearching = savedInstanceState
 				.getBoolean("location_searching");
-		this.locationEnstablished = savedInstanceState
+		this.locationEstablished = savedInstanceState
 				.getBoolean("location_enstablished");
 		this.sending = savedInstanceState.getBoolean("sending");
 		this.date = savedInstanceState.getString("date");
@@ -176,6 +187,7 @@ public class MainActivity extends Activity implements LocationListener {
 			NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
 			if (networkInfo != null && networkInfo.isConnected()) {
 				this.sending = true;
+				updateButtons();
 				new SendTask().execute(getXML());
 			} else {
 				Log.d("GeoPhoto", "No network connection available.");
@@ -224,8 +236,9 @@ public class MainActivity extends Activity implements LocationListener {
 			} else {
 				Log.d("GeoPhoto", "Location Enabled");
 				this.locationSearching = true;
-				this.locationEnstablished = false;
+				this.locationEstablished = false;
 				repaintLocation();
+				updateButtons();
 				locationManager.requestSingleUpdate(provider, this,
 						getMainLooper());
 			}
@@ -314,6 +327,7 @@ public class MainActivity extends Activity implements LocationListener {
 		@Override
 		protected void onPostExecute(String result) {
 			sending = false;
+			updateButtons();
 			if (result != null) {
 				Toast.makeText(mainActivity,
 						"Data sent with response " + result, Toast.LENGTH_LONG)
@@ -424,7 +438,7 @@ public class MainActivity extends Activity implements LocationListener {
 		if (this.locationSearching) {
 			textLocation.setText(getString(R.string.text_location) + " "
 					+ getString(R.string.text_searching));
-		} else if (this.locationEnstablished) {
+		} else if (this.locationEstablished) {
 			textLocation.setText(getString(R.string.text_location) + " Lat: "
 					+ this.latitude + ", Long: " + this.longitude);
 		} else {
@@ -436,6 +450,33 @@ public class MainActivity extends Activity implements LocationListener {
 		textDate.setText(getString(R.string.text_date) + " " + this.date);
 	}
 
+	private void updateButtons() {
+		if (this.sending) {
+			this.buttonPhoto.setEnabled(false);
+			this.buttonLocation.setEnabled(false);
+			this.buttonSend.setEnabled(false);
+		} else {
+			// buttonPhoto
+			if (!this.locationSearching) {
+				this.buttonPhoto.setEnabled(true);
+			} else {
+				this.buttonPhoto.setEnabled(false);
+			}
+			// buttonLocation
+			if (this.imagePath != null) {
+				this.buttonLocation.setEnabled(true);
+			} else {
+				this.buttonLocation.setEnabled(false);
+			}
+			// buttonSend
+			if (this.imagePath != null && this.locationEstablished) {
+				this.buttonSend.setEnabled(true);
+			} else {
+				this.buttonSend.setEnabled(false);
+			}
+		}
+	}
+
 	/*
 	 * LocationListener methods
 	 */
@@ -445,8 +486,9 @@ public class MainActivity extends Activity implements LocationListener {
 		this.latitude = location.getLatitude();
 		this.longitude = location.getLongitude();
 		this.locationSearching = false;
-		this.locationEnstablished = true;
+		this.locationEstablished = true;
 		repaintLocation();
+		updateButtons();
 		this.date = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss",
 				Locale.getDefault()).format(new Date());
 		repaintDate();

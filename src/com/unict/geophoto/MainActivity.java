@@ -42,6 +42,7 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -62,6 +63,7 @@ public class MainActivity extends Activity implements LocationListener {
 	private ImageView imageView;
 	private TextView textLocation;
 	private TextView textDate;
+	private ProgressBar progressBar;
 	private LocationManager locationManager;
 	private String provider;
 	private Activity mainActivity = this;
@@ -79,6 +81,7 @@ public class MainActivity extends Activity implements LocationListener {
 		imageView = (ImageView) findViewById(R.id.imageViewPhoto);
 		textLocation = (TextView) findViewById(R.id.textLocation);
 		textDate = (TextView) findViewById(R.id.textDate);
+		progressBar = (ProgressBar) findViewById(R.id.progressBar);
 		locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		provider = LocationManager.GPS_PROVIDER;
 	}
@@ -121,7 +124,7 @@ public class MainActivity extends Activity implements LocationListener {
 		repaintImage();
 		repaintLocation();
 		repaintDate();
-		updateButtons();
+		updateGUI();
 	}
 
 	@Override
@@ -187,7 +190,7 @@ public class MainActivity extends Activity implements LocationListener {
 			NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
 			if (networkInfo != null && networkInfo.isConnected()) {
 				this.sending = true;
-				updateButtons();
+				updateGUI();
 				new SendTask().execute(getXML());
 			} else {
 				Log.d("GeoPhoto", "No network connection available.");
@@ -238,7 +241,7 @@ public class MainActivity extends Activity implements LocationListener {
 				this.locationSearching = true;
 				this.locationEstablished = false;
 				repaintLocation();
-				updateButtons();
+				updateGUI();
 				locationManager.requestSingleUpdate(provider, this,
 						getMainLooper());
 			}
@@ -327,7 +330,7 @@ public class MainActivity extends Activity implements LocationListener {
 		@Override
 		protected void onPostExecute(String result) {
 			sending = false;
-			updateButtons();
+			updateGUI();
 			if (result != null) {
 				Toast.makeText(mainActivity,
 						"Data sent with response " + result, Toast.LENGTH_LONG)
@@ -450,7 +453,8 @@ public class MainActivity extends Activity implements LocationListener {
 		textDate.setText(getString(R.string.text_date) + " " + this.date);
 	}
 
-	private void updateButtons() {
+	private void updateGUI() {
+		// update buttons
 		if (this.sending) {
 			this.buttonPhoto.setEnabled(false);
 			this.buttonLocation.setEnabled(false);
@@ -475,6 +479,12 @@ public class MainActivity extends Activity implements LocationListener {
 				this.buttonSend.setEnabled(false);
 			}
 		}
+		// update progressBar
+		if (this.sending || this.locationSearching) {
+			this.progressBar.setVisibility(ProgressBar.VISIBLE);
+		} else {
+			this.progressBar.setVisibility(ProgressBar.INVISIBLE);
+		}
 	}
 
 	/*
@@ -488,7 +498,7 @@ public class MainActivity extends Activity implements LocationListener {
 		this.locationSearching = false;
 		this.locationEstablished = true;
 		repaintLocation();
-		updateButtons();
+		updateGUI();
 		this.date = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss",
 				Locale.getDefault()).format(new Date());
 		repaintDate();

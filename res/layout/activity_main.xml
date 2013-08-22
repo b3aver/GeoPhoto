@@ -66,4 +66,15 @@
         android:layout_centerHorizontal="true"
         android:text="@string/text_date" />
 
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="@android:style/Widget.ProgressBar.Small"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/buttonSend"
+        android:layout_marginBottom="14dp"
+        android:layout_toRightOf="@+id/buttonSend"
+        android:indeterminate="true"
+        android:visibility="invisible" />
+
 </RelativeLayout>

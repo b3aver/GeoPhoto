@@ -1,35 +1,54 @@
 package com.unict.geophoto;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.NameValuePair;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity implements LocationListener {
 
 	private static final int ACTION_TAKE_PHOTO = 1;
 	private static final int ACTION_ENABLE_LOCATION_SOURCE = 2;
+	private static final int ACTION_ENABLE_NETWORK = 3;
 	private static final String JPEG_FILE_PREFIX = "IMG_";
 	private static final String JPEG_FILE_SUFFIX = ".jpg";
 	private File imagePath;
@@ -41,6 +60,7 @@ public class MainActivity extends Activity implements LocationListener {
 	private TextView textDate;
 	private LocationManager locationManager;
 	private String provider;
+	private Activity mainActivity = this;
 	private boolean locationSearching = false;
 	private boolean locationEnstablished = false;
 
@@ -75,6 +95,11 @@ public class MainActivity extends Activity implements LocationListener {
 		case ACTION_ENABLE_LOCATION_SOURCE: {
 			Log.d("GeoPhoto", "Return from location source settings");
 			retrieveLocation();
+			break;
+		}
+		case ACTION_ENABLE_NETWORK: {
+			Log.d("GeoPhoto", "Return from network settings");
+			sendData(null);
 		}
 		}
 	}
@@ -143,7 +168,14 @@ public class MainActivity extends Activity implements LocationListener {
 
 	/** Called when the user clicks the send button */
 	public void sendData(View view) {
-
+		ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+		if (networkInfo != null && networkInfo.isConnected()) {
+			new SendTask().execute(getXML());
+		} else {
+			Log.d("GeoPhoto", "No network connection available.");
+			showNetworkAlert();
+		}
 	}
 
 	/*
@@ -196,7 +228,7 @@ public class MainActivity extends Activity implements LocationListener {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle(getString(R.string.dialog_gps_title))
 				.setMessage(getString(R.string.dialog_gps_message))
-				.setPositiveButton(getString(R.string.dialog_gps_ok),
+				.setPositiveButton(getString(R.string.dialog_ok),
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int id) {
 								Intent intent = new Intent(
@@ -205,7 +237,7 @@ public class MainActivity extends Activity implements LocationListener {
 										ACTION_ENABLE_LOCATION_SOURCE);
 							}
 						})
-				.setNegativeButton(getString(R.string.dialog_gps_cancel),
+				.setNegativeButton(getString(R.string.dialog_cancel),
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int id) {
 								// User cancelled the dialog
@@ -213,6 +245,123 @@ public class MainActivity extends Activity implements LocationListener {
 						});
 		// show the created AlertDialog
 		builder.show();
+	}
+
+	/*
+	 * Internal methods and classes to send the data over the internet
+	 */
+	private String getXML() {
+		String xml = "<?xml version=\"1.0\"?>\n<photo>\n";
+		xml += "<image>" + getImageBase64() + "</image>\n";
+		xml += "<date>" + this.date + "</date>\n";
+		xml += "<location>\n<latitude>" + this.latitude
+				+ "</latitude>\n<longitude>" + this.longitude
+				+ "</longitude>\n</location>\n";
+		xml += "</photo>";
+		return xml;
+	}
+
+	private String getImageBase64() {
+		Bitmap bm = BitmapFactory.decodeFile(imagePath.getAbsolutePath());
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		bm.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+		return Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
+	}
+
+	private void showNetworkAlert() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(getString(R.string.dialog_network_title))
+				.setMessage(getString(R.string.dialog_network_message))
+				.setPositiveButton(getString(R.string.dialog_ok),
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int id) {
+								Intent intent = new Intent(
+										Settings.ACTION_WIFI_SETTINGS);
+								startActivityForResult(intent,
+										ACTION_ENABLE_NETWORK);
+							}
+						})
+				.setNegativeButton(getString(R.string.dialog_cancel),
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int id) {
+								// User cancelled the dialog
+							}
+						});
+		// show the created AlertDialog
+		builder.show();
+	}
+
+	private class SendTask extends AsyncTask<String, Void, String> {
+		@Override
+		protected String doInBackground(String... xml) {
+			try {
+				return sendData(xml[0]);
+			} catch (IOException e) {
+				Log.d("GeoPhoto", "IOException");
+				return null;
+			}
+		}
+
+		// onPostExecute displays the results of the AsyncTask.
+		@Override
+		protected void onPostExecute(String result) {
+			if (result != null) {
+				Toast.makeText(mainActivity,
+						"Data sent with response " + result, Toast.LENGTH_LONG)
+						.show();
+			} else {
+				Toast.makeText(mainActivity, "An error occurred",
+						Toast.LENGTH_LONG).show();
+			}
+		}
+
+		private String sendData(String xml) throws IOException {
+			OutputStreamWriter wr = null;
+			try {
+				URL url = new URL(getString(R.string.server_url));
+				HttpURLConnection conn = (HttpURLConnection) url
+						.openConnection();
+				conn.setReadTimeout(10000 /* milliseconds */);
+				conn.setConnectTimeout(15000 /* milliseconds */);
+				conn.setRequestMethod("POST");
+				conn.setDoOutput(true);
+
+				// prepare the parameters
+				List<NameValuePair> params = new ArrayList<NameValuePair>();
+				params.add(new BasicNameValuePair("data", xml));
+
+				wr = new OutputStreamWriter(conn.getOutputStream());
+				wr.write(getQuery(params));
+				wr.close();
+				conn.connect();
+				int response = conn.getResponseCode();
+				Log.d("GeoPhoto", "The response is: " + response);
+				return response + "";
+			} finally {
+				if (wr != null) {
+					wr.close();
+				}
+			}
+		}
+
+		private String getQuery(List<NameValuePair> params)
+				throws UnsupportedEncodingException {
+			StringBuilder result = new StringBuilder();
+			boolean first = true;
+
+			for (NameValuePair pair : params) {
+				if (first)
+					first = false;
+				else
+					result.append("&");
+
+				result.append(URLEncoder.encode(pair.getName(), "UTF-8"));
+				result.append("=");
+				result.append(URLEncoder.encode(pair.getValue(), "UTF-8"));
+			}
+
+			return result.toString();
+		}
 	}
 
 	/*

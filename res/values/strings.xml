@@ -14,7 +14,10 @@
     <string name="album_name">GeoPhoto</string>
     <string name="dialog_gps_title">GPS settings</string>
     <string name="dialog_gps_message">GPS is not enabled. Do you want to enable it in the system settings?</string>
-    <string name="dialog_gps_ok">OK</string>
-    <string name="dialog_gps_cancel">Cancel</string>
-    
+    <string name="dialog_network_title">Connection settings</string>
+    <string name="dialog_network_message">No network connection available. Do you want to enable it in the system settings?</string>
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="server_url">http://192.168.1.186/geophoto/geophoto.php</string>
+
 </resources>

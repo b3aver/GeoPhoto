@@ -63,6 +63,7 @@ public class MainActivity extends Activity implements LocationListener {
 	private Activity mainActivity = this;
 	private boolean locationSearching = false;
 	private boolean locationEnstablished = false;
+	private boolean sending = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -103,6 +104,14 @@ public class MainActivity extends Activity implements LocationListener {
 		}
 		}
 	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		repaintImage();
+		repaintLocation();
+		repaintDate();
+	}
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
@@ -110,20 +119,13 @@ public class MainActivity extends Activity implements LocationListener {
 		outState.putDouble("longitude", this.longitude);
 		outState.putBoolean("location_searching", this.locationSearching);
 		outState.putBoolean("location_enstablished", this.locationEnstablished);
+		outState.putBoolean("sending", this.sending);
 		outState.putString("date", this.date);
 		if (this.imagePath != null) {
 			outState.putString("path", this.imagePath.getAbsolutePath());
 		} else {
 			outState.putString("path", null);
 		}
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		repaintImage();
-		repaintLocation();
-		repaintDate();
 	}
 
 	@Override
@@ -134,6 +136,7 @@ public class MainActivity extends Activity implements LocationListener {
 				.getBoolean("location_searching");
 		this.locationEnstablished = savedInstanceState
 				.getBoolean("location_enstablished");
+		this.sending = savedInstanceState.getBoolean("sending");
 		this.date = savedInstanceState.getString("date");
 		String path = savedInstanceState.getString("path");
 		if (path != null) {
@@ -168,13 +171,16 @@ public class MainActivity extends Activity implements LocationListener {
 
 	/** Called when the user clicks the send button */
 	public void sendData(View view) {
-		ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-		if (networkInfo != null && networkInfo.isConnected()) {
-			new SendTask().execute(getXML());
-		} else {
-			Log.d("GeoPhoto", "No network connection available.");
-			showNetworkAlert();
+		if (!this.sending) {
+			ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+			NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+			if (networkInfo != null && networkInfo.isConnected()) {
+				this.sending = true;
+				new SendTask().execute(getXML());
+			} else {
+				Log.d("GeoPhoto", "No network connection available.");
+				showNetworkAlert();
+			}
 		}
 	}
 
@@ -211,16 +217,18 @@ public class MainActivity extends Activity implements LocationListener {
 	 * Internal methods to take location
 	 */
 	private void retrieveLocation() {
-		boolean enabled = locationManager.isProviderEnabled(provider);
-		if (!enabled) {
-			showGPSAlert();
-		} else {
-			Log.d("GeoPhoto", "Location Enabled");
-			this.locationSearching = true;
-			this.locationEnstablished = false;
-			repaintLocation();
-			locationManager
-					.requestSingleUpdate(provider, this, getMainLooper());
+		if (!this.locationSearching) {
+			boolean enabled = locationManager.isProviderEnabled(provider);
+			if (!enabled) {
+				showGPSAlert();
+			} else {
+				Log.d("GeoPhoto", "Location Enabled");
+				this.locationSearching = true;
+				this.locationEnstablished = false;
+				repaintLocation();
+				locationManager.requestSingleUpdate(provider, this,
+						getMainLooper());
+			}
 		}
 	}
 
@@ -305,6 +313,7 @@ public class MainActivity extends Activity implements LocationListener {
 		// onPostExecute displays the results of the AsyncTask.
 		@Override
 		protected void onPostExecute(String result) {
+			sending = false;
 			if (result != null) {
 				Toast.makeText(mainActivity,
 						"Data sent with response " + result, Toast.LENGTH_LONG)

@@ -19,5 +19,8 @@
     <string name="dialog_ok">OK</string>
     <string name="dialog_cancel">Cancel</string>
     <string name="server_url">http://192.168.1.186/geophoto/geophoto.php</string>
+    <string name="pref_server_summary">Address of the server.</string>
+    <string name="pref_server_title">Server Address</string>
+    <string name="pref_category_network">Network</string>
 
 </resources>

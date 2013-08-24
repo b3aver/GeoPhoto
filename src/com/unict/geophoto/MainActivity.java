@@ -22,6 +22,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
@@ -33,11 +34,13 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
@@ -84,6 +87,7 @@ public class MainActivity extends Activity implements LocationListener {
 		progressBar = (ProgressBar) findViewById(R.id.progressBar);
 		locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		provider = LocationManager.GPS_PROVIDER;
+		PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 	}
 
 	@Override
@@ -91,6 +95,19 @@ public class MainActivity extends Activity implements LocationListener {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.action_settings:
+			Intent settingsActivity = new Intent(getBaseContext(),
+					SettingsActivity.class);
+			startActivity(settingsActivity);
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
 	}
 
 	@Override
@@ -344,7 +361,13 @@ public class MainActivity extends Activity implements LocationListener {
 		private String sendData(String xml) throws IOException {
 			OutputStreamWriter wr = null;
 			try {
-				URL url = new URL(getString(R.string.server_url));
+				// Gets the server address
+				SharedPreferences sharedPrefs = PreferenceManager
+						.getDefaultSharedPreferences(mainActivity);
+				String serverUrl = sharedPrefs
+						.getString("server_url_preference",
+								getString(R.string.server_url));
+				URL url = new URL(serverUrl);
 				HttpURLConnection conn = (HttpURLConnection) url
 						.openConnection();
 				conn.setReadTimeout(10000 /* milliseconds */);

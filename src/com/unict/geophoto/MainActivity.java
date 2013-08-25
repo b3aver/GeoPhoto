@@ -25,9 +25,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.ExifInterface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -423,12 +425,17 @@ public class MainActivity extends Activity implements LocationListener {
 	 */
 	private void repaintImage() {
 		if (imagePath != null) {
+			// retrieve the rotation
+			final int rotation = getImageRotation();
 			// retrieve sizes
 			BitmapFactory.Options opts = new BitmapFactory.Options();
 			opts.inJustDecodeBounds = true;
 			BitmapFactory.decodeFile(imagePath.getAbsolutePath(), opts);
-			final int height = opts.outHeight;
-			final int width = opts.outWidth;
+			final int height = getHeightRotated(rotation, opts.outHeight,
+					opts.outWidth);
+			final int width = getWidthRotated(rotation, opts.outHeight,
+					opts.outWidth);
+			// Create the observer otherwise imageView hasn't the right sizes
 			ViewTreeObserver vto = imageView.getViewTreeObserver();
 			vto.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
 				public boolean onPreDraw() {
@@ -450,18 +457,70 @@ public class MainActivity extends Activity implements LocationListener {
 						inSampleSize = heightRatio < widthRatio ? heightRatio
 								: widthRatio;
 					}
-					// load and show photo
+					// load and rotate photo
+					Matrix matrix = new Matrix();
+					matrix.setRotate(rotation);
 					BitmapFactory.Options opts2 = new BitmapFactory.Options();
 					opts2.inJustDecodeBounds = false;
 					opts2.inSampleSize = inSampleSize;
-					imageView.setImageBitmap(BitmapFactory.decodeFile(
-							imagePath.getAbsolutePath(), opts2));
+					Bitmap b = BitmapFactory.decodeFile(
+							imagePath.getAbsolutePath(), opts2);
+					b = Bitmap.createBitmap(b, 0, 0, b.getWidth(),
+							b.getHeight(), matrix, true);
+					// show photo
+					imageView.setImageBitmap(b);
 					// remove this listener
 					imageView.getViewTreeObserver().removeOnPreDrawListener(
 							this);
 					return true;
 				}
 			});
+		}
+	}
+
+	private int getImageRotation() {
+		int orientation = 1;
+		try {
+			ExifInterface exif = new ExifInterface(imagePath.getAbsolutePath());
+			orientation = exif
+					.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
+		} catch (IOException e) {
+			Log.e("GeoPhoto", "Exif Read error", e);
+		}
+		int rotationDegree = 90;
+		switch (orientation) {
+		case ExifInterface.ORIENTATION_ROTATE_90:
+			return rotationDegree;
+		case ExifInterface.ORIENTATION_ROTATE_180:
+			return rotationDegree * 2;
+		case ExifInterface.ORIENTATION_ROTATE_270:
+			return -rotationDegree;
+		default:
+			return 0;
+		}
+	}
+
+	private int getHeightRotated(int rotation, int height, int width) {
+		switch (rotation) {
+		case 90:
+		case 270:
+			return width;
+		case 0:
+		case 180:
+		default:
+			return height;
+		}
+	}
+
+	private int getWidthRotated(int rotation, int height, int width) {
+		switch (rotation) {
+		case 90:
+		case 270:
+			return height;
+		case 0:
+		case 180:
+		default:
+			return width;
 		}
 	}
 

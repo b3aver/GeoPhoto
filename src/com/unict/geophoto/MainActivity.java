@@ -1,7 +1,7 @@
 package com.unict.geophoto;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
@@ -303,10 +303,15 @@ public class MainActivity extends Activity implements LocationListener {
 	}
 
 	private String getImageBase64() {
-		Bitmap bm = BitmapFactory.decodeFile(imagePath.getAbsolutePath());
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		bm.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-		return Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
+		byte[] byteArray = new byte[(int) imagePath.length()];
+		try {
+			FileInputStream fileInputStream = new FileInputStream(imagePath);
+			fileInputStream.read(byteArray);
+			fileInputStream.close();
+		} catch (IOException e) {
+			Log.e("GeoPhoto", "Error in image read", e);
+		}
+		return Base64.encodeToString(byteArray, Base64.DEFAULT);
 	}
 
 	private void showNetworkAlert() {

@@ -339,33 +339,37 @@ public class MainActivity extends Activity implements LocationListener {
 		builder.show();
 	}
 
-	private class SendTask extends AsyncTask<String, Void, String> {
+	private class SendTask extends AsyncTask<String, Void, Integer> {
 		@Override
-		protected String doInBackground(String... xml) {
+		protected Integer doInBackground(String... xml) {
 			try {
 				return sendData(xml[0]);
 			} catch (IOException e) {
 				Log.d("GeoPhoto", "IOException");
-				return null;
+				return 400;
 			}
 		}
 
 		// onPostExecute displays the results of the AsyncTask.
 		@Override
-		protected void onPostExecute(String result) {
+		protected void onPostExecute(Integer result) {
 			sending = false;
 			updateGUI();
 			if (result != null) {
-				Toast.makeText(mainActivity,
-						"Data sent with response " + result, Toast.LENGTH_LONG)
-						.show();
+				String msg = "";
+				if (result == 200) {
+					msg = "Data sent correctly";
+				} else {
+					msg = "Error " + result;
+				}
+				Toast.makeText(mainActivity, msg, Toast.LENGTH_LONG).show();
 			} else {
 				Toast.makeText(mainActivity, "An error occurred",
 						Toast.LENGTH_LONG).show();
 			}
 		}
 
-		private String sendData(String xml) throws IOException {
+		private int sendData(String xml) throws IOException {
 			OutputStreamWriter wr = null;
 			try {
 				// Gets the server address
@@ -392,7 +396,7 @@ public class MainActivity extends Activity implements LocationListener {
 				conn.connect();
 				int response = conn.getResponseCode();
 				Log.d("GeoPhoto", "The response is: " + response);
-				return response + "";
+				return response;
 			} finally {
 				if (wr != null) {
 					wr.close();

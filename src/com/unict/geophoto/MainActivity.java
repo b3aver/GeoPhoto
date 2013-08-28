@@ -36,7 +36,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewTreeObserver;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -52,9 +52,9 @@ public class MainActivity extends FragmentActivity implements LocationListener,
 	private double latitude;
 	private double longitude;
 	private String date = "";
-	private Button buttonPhoto;
-	private Button buttonLocation;
-	private Button buttonSend;
+	private ImageButton buttonPhoto;
+	private ImageButton buttonLocation;
+	private ImageButton buttonSend;
 	private MenuItem menuItemClearAll;
 	private ImageView imageView;
 	private TextView textLocation;
@@ -71,9 +71,9 @@ public class MainActivity extends FragmentActivity implements LocationListener,
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		buttonPhoto = (Button) findViewById(R.id.buttonPhoto);
-		buttonLocation = (Button) findViewById(R.id.buttonLocation);
-		buttonSend = (Button) findViewById(R.id.buttonSend);
+		buttonPhoto = (ImageButton) findViewById(R.id.buttonPhoto);
+		buttonLocation = (ImageButton) findViewById(R.id.buttonLocation);
+		buttonSend = (ImageButton) findViewById(R.id.buttonSend);
 		imageView = (ImageView) findViewById(R.id.imageViewPhoto);
 		textLocation = (TextView) findViewById(R.id.textLocation);
 		textDate = (TextView) findViewById(R.id.textDate);

@@ -3,6 +3,7 @@
 
     <string name="app_name">GeoPhoto</string>
     <string name="action_settings">Settings</string>
+    <string name="action_clear_all">Clear all</string>
     <string name="hello_world">Hello world!</string>
     <string name="button_photo">photo</string>
     <string name="button_location">location</string>

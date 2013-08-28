@@ -56,6 +56,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
 	private Button buttonPhoto;
 	private Button buttonLocation;
 	private Button buttonSend;
+	private MenuItem menuItemClearAll;
 	private ImageView imageView;
 	private TextView textLocation;
 	private TextView textDate;
@@ -93,6 +94,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
+		menuItemClearAll = menu.findItem(R.id.action_clear_all);
 		return true;
 	}
 
@@ -103,6 +105,15 @@ public class MainActivity extends FragmentActivity implements LocationListener,
 			Intent settingsActivity = new Intent(getBaseContext(),
 					SettingsActivity.class);
 			startActivity(settingsActivity);
+			return true;
+		case R.id.action_clear_all:
+			this.imagePath = null;
+			this.locationEstablished = false;
+			this.date = "";
+			repaintImage();
+			repaintLocation();
+			repaintDate();
+			updateGUI();
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);
@@ -355,7 +366,9 @@ public class MainActivity extends FragmentActivity implements LocationListener,
 	 * Repaint methods
 	 */
 	private void repaintImage() {
-		if (imagePath != null) {
+		if (imagePath == null) {
+			imageView.setImageDrawable(null);
+		} else {
 			// retrieve the rotation
 			final int rotation = getImageRotation();
 			// retrieve sizes
@@ -500,8 +513,14 @@ public class MainActivity extends FragmentActivity implements LocationListener,
 		// update progressBar
 		if (this.sending || this.locationSearching) {
 			this.progressBar.setVisibility(ProgressBar.VISIBLE);
+			if (this.menuItemClearAll != null) {
+				this.menuItemClearAll.setEnabled(false);
+			}
 		} else {
 			this.progressBar.setVisibility(ProgressBar.INVISIBLE);
+			if (this.menuItemClearAll != null) {
+				this.menuItemClearAll.setEnabled(true);
+			}
 		}
 	}
 

@@ -3,19 +3,9 @@ package com.unict.geophoto;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
-
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.NameValuePair;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -33,12 +23,13 @@ import android.media.ExifInterface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
@@ -49,9 +40,9 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
-public class MainActivity extends Activity implements LocationListener {
+public class MainActivity extends FragmentActivity implements LocationListener,
+		SendFragment.SendCallbacks {
 
 	private static final int ACTION_TAKE_PHOTO = 1;
 	private static final int ACTION_ENABLE_LOCATION_SOURCE = 2;
@@ -71,10 +62,10 @@ public class MainActivity extends Activity implements LocationListener {
 	private ProgressBar progressBar;
 	private LocationManager locationManager;
 	private String provider;
-	private Activity mainActivity = this;
 	private boolean locationSearching = false;
 	private boolean locationEstablished = false;
 	private boolean sending = false;
+	private SendFragment sendFragment;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +81,12 @@ public class MainActivity extends Activity implements LocationListener {
 		locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		provider = LocationManager.GPS_PROVIDER;
 		PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+		FragmentManager fm = getSupportFragmentManager();
+		sendFragment = (SendFragment) fm.findFragmentByTag("task");
+		if (sendFragment == null) {
+			sendFragment = new SendFragment();
+			fm.beginTransaction().add(sendFragment, "task").commit();
+		}
 	}
 
 	@Override
@@ -148,6 +145,7 @@ public class MainActivity extends Activity implements LocationListener {
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
 		outState.putDouble("latitude", this.latitude);
 		outState.putDouble("longitude", this.longitude);
 		outState.putBoolean("location_searching", this.locationSearching);
@@ -163,6 +161,7 @@ public class MainActivity extends Activity implements LocationListener {
 
 	@Override
 	protected void onRestoreInstanceState(Bundle savedInstanceState) {
+		super.onRestoreInstanceState(savedInstanceState);
 		this.latitude = savedInstanceState.getDouble("latitude");
 		this.longitude = savedInstanceState.getDouble("longitude");
 		this.locationSearching = savedInstanceState
@@ -182,7 +181,10 @@ public class MainActivity extends Activity implements LocationListener {
 	/*
 	 * User interface callbacks
 	 */
-	/** Called when the user clicks the photo button */
+
+	/**
+	 * Called when the user clicks the photo button
+	 */
 	public void takePhoto(View view) {
 		try {
 			imagePath = createImageFile();
@@ -197,12 +199,16 @@ public class MainActivity extends Activity implements LocationListener {
 		}
 	}
 
-	/** Called when the user clicks the location button */
+	/**
+	 * Called when the user clicks the location button
+	 */
 	public void takeLocation(View view) {
 		retrieveLocation();
 	}
 
-	/** Called when the user clicks the send button */
+	/**
+	 * Called when the user clicks the send button
+	 */
 	public void sendData(View view) {
 		if (!this.sending) {
 			ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -210,7 +216,12 @@ public class MainActivity extends Activity implements LocationListener {
 			if (networkInfo != null && networkInfo.isConnected()) {
 				this.sending = true;
 				updateGUI();
-				new SendTask().execute(getXML());
+				SharedPreferences sharedPrefs = PreferenceManager
+						.getDefaultSharedPreferences(this);
+				String serverUrl = sharedPrefs
+						.getString("server_url_preference",
+								getString(R.string.server_url));
+				sendFragment.start(serverUrl, getXML());
 			} else {
 				Log.d("GeoPhoto", "No network connection available.");
 				showNetworkAlert();
@@ -294,8 +305,9 @@ public class MainActivity extends Activity implements LocationListener {
 	 * Internal methods and classes to send the data over the internet
 	 */
 	private String getXML() {
+		String imageBase64 = getImageBase64();
 		String xml = "<?xml version=\"1.0\"?>\n<photo>\n";
-		xml += "<image>" + getImageBase64() + "</image>\n";
+		xml += "<image>" + imageBase64 + "</image>\n";
 		xml += "<date>" + this.date + "</date>\n";
 		xml += "<location>\n<latitude>" + this.latitude
 				+ "</latitude>\n<longitude>" + this.longitude
@@ -337,91 +349,6 @@ public class MainActivity extends Activity implements LocationListener {
 						});
 		// show the created AlertDialog
 		builder.show();
-	}
-
-	private class SendTask extends AsyncTask<String, Void, Integer> {
-		@Override
-		protected Integer doInBackground(String... xml) {
-			try {
-				return sendData(xml[0]);
-			} catch (IOException e) {
-				Log.d("GeoPhoto", "IOException");
-				return 400;
-			}
-		}
-
-		// onPostExecute displays the results of the AsyncTask.
-		@Override
-		protected void onPostExecute(Integer result) {
-			sending = false;
-			updateGUI();
-			if (result != null) {
-				String msg = "";
-				if (result == 200) {
-					msg = "Data sent correctly";
-				} else {
-					msg = "Error " + result;
-				}
-				Toast.makeText(mainActivity, msg, Toast.LENGTH_LONG).show();
-			} else {
-				Toast.makeText(mainActivity, "An error occurred",
-						Toast.LENGTH_LONG).show();
-			}
-		}
-
-		private int sendData(String xml) throws IOException {
-			OutputStreamWriter wr = null;
-			try {
-				// Gets the server address
-				SharedPreferences sharedPrefs = PreferenceManager
-						.getDefaultSharedPreferences(mainActivity);
-				String serverUrl = sharedPrefs
-						.getString("server_url_preference",
-								getString(R.string.server_url));
-				URL url = new URL(serverUrl);
-				HttpURLConnection conn = (HttpURLConnection) url
-						.openConnection();
-				conn.setReadTimeout(10000 /* milliseconds */);
-				conn.setConnectTimeout(15000 /* milliseconds */);
-				conn.setRequestMethod("POST");
-				conn.setDoOutput(true);
-
-				// prepare the parameters
-				List<NameValuePair> params = new ArrayList<NameValuePair>();
-				params.add(new BasicNameValuePair("data", xml));
-
-				wr = new OutputStreamWriter(conn.getOutputStream());
-				wr.write(getQuery(params));
-				wr.close();
-				conn.connect();
-				int response = conn.getResponseCode();
-				Log.d("GeoPhoto", "The response is: " + response);
-				return response;
-			} finally {
-				if (wr != null) {
-					wr.close();
-				}
-			}
-		}
-
-		private String getQuery(List<NameValuePair> params)
-				throws UnsupportedEncodingException {
-			StringBuilder result = new StringBuilder();
-			boolean first = true;
-
-			for (NameValuePair pair : params) {
-				if (first)
-					first = false;
-				else
-					result.append("&");
-
-				result.append(URLEncoder.encode(pair.getName(), "UTF-8"));
-				result.append("=");
-				result.append(URLEncoder.encode(pair.getValue(), "UTF-8"));
-			}
-
-			return result.toString();
-		}
 	}
 
 	/*
@@ -611,5 +538,14 @@ public class MainActivity extends Activity implements LocationListener {
 	public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
 		// TODO Auto-generated method stub
 
+	}
+
+	/*
+	 * SendFragment.SendCallbacks methods
+	 */
+	@Override
+	public void onPostExecute() {
+		this.sending = false;
+		updateGUI();
 	}
 }

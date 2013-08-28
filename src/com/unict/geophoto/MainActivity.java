@@ -46,7 +46,6 @@ public class MainActivity extends FragmentActivity implements LocationListener,
 
 	private static final int ACTION_TAKE_PHOTO = 1;
 	private static final int ACTION_ENABLE_LOCATION_SOURCE = 2;
-	private static final int ACTION_ENABLE_NETWORK = 3;
 	private static final String JPEG_FILE_PREFIX = "IMG_";
 	private static final String JPEG_FILE_SUFFIX = ".jpg";
 	private File imagePath;
@@ -137,10 +136,6 @@ public class MainActivity extends FragmentActivity implements LocationListener,
 			Log.d("GeoPhoto", "Return from location source settings");
 			retrieveLocation();
 			break;
-		}
-		case ACTION_ENABLE_NETWORK: {
-			Log.d("GeoPhoto", "Return from network settings");
-			sendData(null);
 		}
 		}
 	}
@@ -346,19 +341,8 @@ public class MainActivity extends FragmentActivity implements LocationListener,
 				.setPositiveButton(getString(android.R.string.ok),
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int id) {
-								Intent intent = new Intent(
-										Settings.ACTION_WIFI_SETTINGS);
-								startActivityForResult(intent,
-										ACTION_ENABLE_NETWORK);
-							}
-						})
-				.setNegativeButton(getString(android.R.string.cancel),
-						new DialogInterface.OnClickListener() {
-							public void onClick(DialogInterface dialog, int id) {
-								// User cancelled the dialog
 							}
 						});
-		// show the created AlertDialog
 		builder.show();
 	}
 

@@ -282,7 +282,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle(getString(R.string.dialog_gps_title))
 				.setMessage(getString(R.string.dialog_gps_message))
-				.setPositiveButton(getString(R.string.dialog_ok),
+				.setPositiveButton(getString(android.R.string.ok),
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int id) {
 								Intent intent = new Intent(
@@ -291,7 +291,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
 										ACTION_ENABLE_LOCATION_SOURCE);
 							}
 						})
-				.setNegativeButton(getString(R.string.dialog_cancel),
+				.setNegativeButton(getString(android.R.string.cancel),
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int id) {
 								// User cancelled the dialog
@@ -332,7 +332,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle(getString(R.string.dialog_network_title))
 				.setMessage(getString(R.string.dialog_network_message))
-				.setPositiveButton(getString(R.string.dialog_ok),
+				.setPositiveButton(getString(android.R.string.ok),
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int id) {
 								Intent intent = new Intent(
@@ -341,7 +341,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
 										ACTION_ENABLE_NETWORK);
 							}
 						})
-				.setNegativeButton(getString(R.string.dialog_cancel),
+				.setNegativeButton(getString(android.R.string.cancel),
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int id) {
 								// User cancelled the dialog

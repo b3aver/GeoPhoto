@@ -16,8 +16,6 @@
     <string name="dialog_gps_message">GPS is not enabled. Do you want to enable it in the system settings?</string>
     <string name="dialog_network_title">Connection settings</string>
     <string name="dialog_network_message">No network connection available. Do you want to enable it in the system settings?</string>
-    <string name="dialog_ok">OK</string>
-    <string name="dialog_cancel">Cancel</string>
     <string name="server_url">http://192.168.1.186/geophoto/geophoto.php</string>
     <string name="pref_server_summary">Address of the server.</string>
     <string name="pref_server_title">Server Address</string>

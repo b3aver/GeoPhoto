@@ -1,0 +1,20 @@
+body {
+    max-width: 650px;
+    margin: auto auto 10px;
+}
+h1 {
+    color: #6060B0;
+    text-align: center;
+}
+.date {
+    font-weight: bold;
+    color: #6060FF;
+}
+li {
+    margin-top: 10px;
+    background: #EEEEFF;
+}
+form {
+    text-align: center;
+}
+

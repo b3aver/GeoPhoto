@@ -26,27 +26,7 @@
   <head>
     <title>GeoPhoto</title>
     <meta charset="UTF-8">
-    <style type="text/css">
-      body {
-        max-width: 650px;
-        margin: auto auto 10px;
-      }
-      h1 {
-        color: #6060B0;
-        text-align: center;
-      }
-     .date {
-        font-weight: bold;
-        color: #6060FF;
-      }
-      li {
-        margin-top: 10px;
-        background: #EEEEFF;
-      }
-      form {
-        text-align: center;
-      }
-    </style>
+    <link rel="stylesheet" type="text/css" href="style.css">
   </head>
   <body>
     <h1>GeoPhoto</h1>

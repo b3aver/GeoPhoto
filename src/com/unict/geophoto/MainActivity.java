@@ -312,14 +312,14 @@ public class MainActivity extends FragmentActivity implements LocationListener,
 	 */
 	private String getXML() {
 		String imageBase64 = getImageBase64();
-		String xml = "<?xml version=\"1.0\"?>\n<photo>\n";
-		xml += "<image>" + imageBase64 + "</image>\n";
-		xml += "<date>" + this.date + "</date>\n";
-		xml += "<location>\n<latitude>" + this.latitude
+		StringBuilder str = new StringBuilder(imageBase64.length() + 500);
+		str.append("<?xml version=\"1.0\"?>\n<photo>\n<image>");
+		str.append(imageBase64);
+		str.append("</image>\n<date>" + this.date + "</date>\n");
+		str.append("<location>\n<latitude>" + this.latitude
 				+ "</latitude>\n<longitude>" + this.longitude
-				+ "</longitude>\n</location>\n";
-		xml += "</photo>";
-		return xml;
+				+ "</longitude>\n</location>\n</photo>");
+		return str.toString();
 	}
 
 	private String getImageBase64() {
